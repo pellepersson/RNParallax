@@ -68,8 +68,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingTop: STATUS_BAR_HEIGHT,
+    paddingBottom: 5,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   headerText: {
     color: DEFAULT_TITLE_COLOR,
@@ -122,6 +123,22 @@ class RNParallax extends Component {
     });
   }
 
+  getTitleContainerHeight() {
+    return this.state.scrollY.interpolate({
+      inputRange: this.getInputRange(),
+      outputRange: [(this.getHeaderMaxHeight() + this.getExtraScrollHeight()) * 0.4, (this.getHeaderMaxHeight()) * 0.4, this.getHeaderMinHeight()],
+      extrapolate: 'clamp',
+    });
+  }
+
+  getHeaderContentHeight() {
+    return this.state.scrollY.interpolate({
+      inputRange: this.getInputRange(),
+      outputRange: [(this.getHeaderMaxHeight() + this.getExtraScrollHeight()) * 0.6, (this.getHeaderMaxHeight()) * 0.6, this.getHeaderMinHeight()],
+      extrapolate: 'clamp',
+    });
+  }
+
   getNavBarOpacity() {
     return this.state.scrollY.interpolate({
       inputRange: this.getInputRange(),
@@ -162,6 +179,13 @@ class RNParallax extends Component {
     });
   }
 
+  getTitleFontSize() {
+    return this.state.scrollY.interpolate({
+      inputRange: this.getInputRange(),
+      outputRange: [48, 48, 20],
+      extrapolate: 'clamp',
+    });
+  }
   renderHeaderTitle() {
     const { title, titleStyle } = this.props;
     const titleTranslate = this.getTitleTranslate();
@@ -174,13 +198,18 @@ class RNParallax extends Component {
             transform: [
               { translateY: titleTranslate },
             ],
-            height: this.getHeaderHeight(),
+            height: this.getTitleContainerHeight(),
           },
         ]}
       >
-        <Text style={[styles.headerText, titleStyle]}>
+        <Animated.Text
+          style={[
+            styles.headerText,
+            titleStyle,
+            { fontSize: this.getTitleFontSize() },
+          ]}>
           {title}
-        </Text>
+        </Animated.Text>
       </Animated.View>
     );
   }
@@ -198,6 +227,33 @@ class RNParallax extends Component {
         ]}
       >
         {renderNavBar()}
+      </Animated.View>
+    );
+  }
+
+  renderHeaderContent() {
+    const { renderHeaderContent } = this.props;
+    const titleTranslate = this.getTitleTranslate();
+    const opacity = this.getImageOpacity();
+
+    return (
+      <Animated.View
+        style={[
+          {
+            paddingTop: STATUS_BAR_HEIGHT,
+            position: 'absolute',
+            top: this.getTitleContainerHeight(),
+            height: this.getHeaderContentHeight(),
+            left: 0,
+            right: 0,
+            opacity,
+            transform: [
+              { translateY: titleTranslate },
+            ],
+          }
+        ]}
+      >
+        {!!renderHeaderContent && renderHeaderContent()}
       </Animated.View>
     );
   }
@@ -306,7 +362,8 @@ class RNParallax extends Component {
         {this.renderNavbarBackground()}
         {this.renderHeaderBackground()}
         {this.renderHeaderTitle()}
-        {this.renderHeaderForeground()}        
+        {this.renderHeaderContent()}
+        {this.renderHeaderForeground()}
       </View>
     );
   }
@@ -316,7 +373,7 @@ RNParallax.propTypes = {
   renderNavBar: PropTypes.func,
   renderContent: PropTypes.func.isRequired,
   backgroundColor: PropTypes.string,
-  backgroundImage: PropTypes.any,
+  backgroundImage: PropTypes.number,
   navbarColor: PropTypes.string,
   title: PropTypes.string,
   titleStyle: PropTypes.number,
